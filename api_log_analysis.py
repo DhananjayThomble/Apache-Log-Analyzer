@@ -1,9 +1,24 @@
 # Sample log line: 106.216.255.173 - - [30/Jul/2023:12:02:03 +0530] "POST /api/v1/admin/get_order_items_by_order_id HTTP/1.0" 200 1055 "-" "okhttp/4.7.2"
 
-import easygui
+import easygui # for importing choice dialog
 from datetime import datetime, timedelta
+from tkinter import simpledialog # for importing date time picker 
 
-log_file_path = "./log"
+# Function to choose the log file from local storage
+def choose_log_file():
+    log_file_path = easygui.fileopenbox(
+        title="Select Log File",
+        msg="Please select a valid apache access log file",
+
+        # ensure that the file has at least some extension
+    )
+    return log_file_path
+
+log_file_path = choose_log_file() # Choose the log file from local storage
+if not log_file_path:
+    exit(0)
+
+
 response_time_threshold = 2000  # Set your desired threshold in milliseconds
 output_file_path = "./api_names_with_response_times.txt"
 
@@ -88,6 +103,8 @@ sorted_routes = sorted(
 
 # Display or save the results in a separate file
 with open(output_file_path, "a") as output_file:
+    # give today's date and time
+    output_file.write(f"\n\n-------------------{datetime.now()}-------------------\n")
     output_file.write( "\n\n-------------------API Response Times-------------------\n")
     for route, (timestamp, max_response_time) in sorted_routes:
         output_file.write(
