@@ -59,8 +59,17 @@ elif choice == "Yesterday 5AM to 12AM":
     end_time_str = (datetime.now() - timedelta(days=1)).strftime("%d/%b/%Y:00:00:00 +0530")
 
 with open(log_file_path, "r") as log_file:
-    for line in log_file:
+
+    lines = log_file.readlines()
+    total_lines = len(lines)
+
+    for i, line in enumerate(lines, start=1):  # Start enumeration from 1, for progress % calculation
         fields = line.split()
+        
+        # show progress % in the console
+        progress = i / total_lines * 100
+        print(f"Progress: {progress:.2f}%", end="\r")
+
         if len(fields) >= 12:
             response_time_str = fields[9]
             response_time = float(response_time_str)
@@ -97,6 +106,8 @@ sorted_routes = sorted(
     routes_with_high_response_times.items(), key=lambda x: x[1][1], reverse=True
 )
 
+print(f"saving the results in {output_file_path} ...")
+
 # Display or save the results in a separate file
 with open(output_file_path, "a") as output_file:
 
@@ -115,4 +126,6 @@ with open(output_file_path, "a") as output_file:
         api_hit_count.items(), key=lambda x: x[1], reverse=True
     ):
         output_file.write(f"API Route: {route}, Hit Count: {hit_count}\n")
+
+print("Done!")
         
