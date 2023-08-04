@@ -9,8 +9,6 @@ def choose_log_file():
     log_file_path = easygui.fileopenbox(
         title="Select Log File",
         msg="Please select a valid apache access log file",
-
-        # ensure that the file has at least some extension
     )
     return log_file_path
 
@@ -19,7 +17,7 @@ if not log_file_path:
     exit(0)
 
 
-response_time_threshold = 2000  # Set your desired threshold in milliseconds
+response_time_threshold = 10  # Set your desired threshold in milliseconds
 output_file_path = "./api_names_with_response_times.txt"
 
 
@@ -40,11 +38,14 @@ choice = easygui.choicebox(msg, title, choices)
 
 if choice == "Custom":
     start_time_str = easygui.enterbox(
-        "Enter the start time (e.g., 26/Jul/2023:12:00:00 +0530):"
+        "Enter the start time (e.g., 26/Jul/2023:12:00:00):",
+        default="03/Aug/2023:12:00:00",
     )
+
     start_time_str += " +0530"  # Add the timezone offset
     end_time_str = easygui.enterbox(
-        "Enter the end time (e.g., 26/Jul/2023:13:00:00 +0530):"
+        "Enter the end time (e.g., 26/Jul/2023:13:00:00):",
+        default="03/Aug/2023:14:00:00",
     )
     end_time_str += " +0530"
 elif choice == "Yesterday's All Logs":
@@ -60,34 +61,29 @@ elif choice == "Yesterday 5AM to 12AM":
 with open(log_file_path, "r") as log_file:
     for line in log_file:
         fields = line.split()
-        if len(fields) >= 10:
-            response_time_str = fields[-3]
-            if response_time_str != '"-"':
-                try:
-                    response_time = float(response_time_str)
-                except ValueError:
-                    continue
+        if len(fields) >= 12:
+            response_time_str = fields[9]
+            response_time = float(response_time_str)
 
-                timestamp = extract_timestamp(line) # extract the timestamp from the log line
-                start_time = datetime.strptime(start_time_str, "%d/%b/%Y:%H:%M:%S %z")
+            timestamp = extract_timestamp(line) # extract the timestamp from the log line
+            start_time = datetime.strptime(start_time_str, "%d/%b/%Y:%H:%M:%S %z")
                 # strptime() converts the string to datetime object
-                end_time = datetime.strptime(end_time_str, "%d/%b/%Y:%H:%M:%S %z")
+            end_time = datetime.strptime(end_time_str, "%d/%b/%Y:%H:%M:%S %z")
 
-                if start_time <= timestamp <= end_time:
-                    request_line = " ".join(fields[5:8])
-                    # Extract the route from the request line
-                    route = request_line.split()[1]
+            if start_time <= timestamp <= end_time:
+                request_line = " ".join(fields[5:8])
+                route = fields[6]
 
-                    if route in api_response_times:
-                        api_response_times[route].append((timestamp, response_time))
-                    else:
-                        api_response_times[route] = [(timestamp, response_time)]
+                if route in api_response_times:
+                    api_response_times[route].append((timestamp, response_time))
+                else:
+                    api_response_times[route] = [(timestamp, response_time)]
 
-                    # Update API hit count
-                    if route in api_hit_count:
-                        api_hit_count[route] += 1
-                    else:
-                        api_hit_count[route] = 1
+                # Update API hit count
+                if route in api_hit_count:
+                    api_hit_count[route] += 1
+                else:
+                     api_hit_count[route] = 1
 
 # Filter routes with higher response times
 routes_with_high_response_times = {
@@ -103,16 +99,15 @@ sorted_routes = sorted(
 
 # Display or save the results in a separate file
 with open(output_file_path, "a") as output_file:
-    # give today's date and time
-    output_file.write(f"\n\n-------------------{datetime.now()}-------------------\n")
+
+    output_file.write(f"\n\n-------------------Analysis started at: {datetime.now()}-------------------\n")
+    output_file.write(f"Time Range: {start_time_str} to {end_time_str}\n")
+    output_file.write(f"Response Time Threshold: {response_time_threshold} ms\n")
     output_file.write( "\n\n-------------------API Response Times-------------------\n")
     for route, (timestamp, max_response_time) in sorted_routes:
         output_file.write(
             f"API Route: {route}, Timestamp: {timestamp}, Response Time: {max_response_time} ms\n"
         )
-    # print(
-    #     f"API Route: {route}, Timestamp: {timestamp}, Max Response Time: {max_response_time} ms"
-    # )
 
     # Display the API hit count
     output_file.write("\n\n-------------------API Hit Count-------------------\n")
@@ -120,4 +115,4 @@ with open(output_file_path, "a") as output_file:
         api_hit_count.items(), key=lambda x: x[1], reverse=True
     ):
         output_file.write(f"API Route: {route}, Hit Count: {hit_count}\n")
-        # print(f"API Route: {route}, Hit Count: {hit_count}")
+        
