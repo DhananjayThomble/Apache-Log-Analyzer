@@ -21,6 +21,14 @@ It helps you gain insights into your web server's performance and identify poten
 
 - Python 3.x
 
+### Running on Linux
+
+1. Ensure you have Python 3 and Tkinter installed on your Linux machine. If Tkinter is not installed, you can install it using the package manager specific to your distribution. For example, on Ubuntu, use the command:
+
+   ```bash
+   sudo apt-get install python3-tk
+   ```
+
 ### Installation
 
 1. Clone the repository:
